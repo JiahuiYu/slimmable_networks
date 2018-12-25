@@ -1,0 +1,63 @@
+# =========================== Basic Settings ===========================
+# machine info
+num_gpus_per_job: 4  # number of gpus each job need
+num_cpus_per_job: 63  # number of cpus each job need
+memory_per_job: 380  # memory requirement each job need
+gpu_type: "nvidia-tesla-p100"
+
+# data
+dataset: imagenet1k
+data_transforms: imagenet1k_basic
+data_loader: imagenet1k_basic
+dataset_dir: data/imagenet
+data_loader_workers: 62
+
+# info
+num_classes: 1000
+image_size: 224
+topk: [1, 5]
+num_epochs: 100
+
+# optimizer
+optimizer: sgd
+momentum: 0.9
+weight_decay: 0.0001
+nesterov: True
+
+# lr
+lr: 0.1
+lr_scheduler: multistep
+multistep_lr_milestones: [30, 60, 90]
+multistep_lr_gamma: 0.1
+
+# model profiling
+profiling: [gpu]
+
+# pretrain, resume, test_only
+pretrained: ''
+resume: ''
+test_only: False
+
+#
+random_seed: 1995
+batch_size: 256
+model: ''
+reset_parameters: True
+
+
+# =========================== Override Settings ===========================
+log_dir: logs/
+slimmable_training: True
+model: models.s_mobilenet_v2
+width_mult: 1.0
+width_mult_list: [0.35, 0.50, 0.75, 1.0]
+num_gpus_per_job: 4
+data_transforms: imagenet1k_mobile
+lr: 0.045
+lr_scheduler: exp_decaying
+exp_decaying_lr_gamma: 0.98
+num_epochs: 480
+batch_size: 160
+# test pretrained
+test_only: True
+pretrained: logs/s_mobilenet_v2_0.35_0.5_0.75_1.0.pt
