@@ -34,7 +34,7 @@ Illustration of slimmable neural networks. The same model can run at different w
 
 ## Technical Details
 
-Implementating slimmable networks and slimmable training is straightforward:
+Implementing slimmable networks and slimmable training is straightforward:
   * Switchable batchnorm and slimmable layers are implemented in [`models/slimmable_ops`](/models/slimmable_ops.py).
   * Slimmable training is implemented in [these lines](https://github.com/JiahuiYu/slimmable_networks/blob/aeb10c9f437208603145e073ee730f0d7dbfa80f/train.py#L281-L289) in [`train.py`](/train.py).
 
