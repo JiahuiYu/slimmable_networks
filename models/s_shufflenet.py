@@ -30,7 +30,7 @@ class Block(nn.Module):
         # residual or concat
         self.residual_connection = stride == 1 and inp == outp
         if not self.residual_connection:
-            block_outp = [i - j for i,j in zip(outp, inp)]
+            block_outp = [i - j for i, j in zip(outp, inp)]
             self.concat_branch = nn.AvgPool2d(3, 2, 1)
         else:
             block_outp = outp
@@ -198,7 +198,7 @@ class Model(nn.Module):
         if FLAGS.reset_parameters:
             self.reset_parameters()
 
-    def forward(self,x):
+    def forward(self, x):
         x = torch.cat(
             [getattr(self, 'head_{}'.format(i))(x) for i in range(
                 FLAGS.groups)], 1)

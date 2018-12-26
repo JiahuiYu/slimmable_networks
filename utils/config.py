@@ -68,10 +68,10 @@ class AttrDict(dict):
                 yaml_dict[key] = value.yaml()
             elif isinstance(value, list):
                 if isinstance(value[0], AttrDict):
-                    l = []
+                    new_l = []
                     for item in value:
-                        l.append(item.yaml())
-                    yaml_dict[key] = l
+                        new_l.append(item.yaml())
+                    yaml_dict[key] = new_l
                 else:
                     yaml_dict[key] = value
             else:
@@ -164,5 +164,6 @@ def app():
         return FLAGS
     else:
         return FLAGS
+
 
 app()

@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import numpy as np
 import time
 import torch
@@ -43,7 +41,7 @@ def get_params(self):
 def run_forward(self, input):
     with Timer() as t:
         for _ in range(num_forwards):
-            _ = self.forward(*input)
+            self.forward(*input)
             torch.cuda.synchronize()
     return int(t.time * 1e9 / num_forwards)
 
@@ -77,8 +75,8 @@ def module_profiling(self, input, output, verbose):
         self.name = conv_module_name_filter(self.__repr__())
     elif isinstance(self, nn.ConvTranspose2d):
         self.n_macs = (ins[1] * outs[1] *
-                     self.kernel_size[0] * self.kernel_size[1] *
-                     outs[2] * outs[3] // self.groups) * outs[0]
+                       self.kernel_size[0] * self.kernel_size[1] *
+                       outs[2] * outs[3] // self.groups) * outs[0]
         self.n_params = get_params(self)
         self.n_seconds = run_forward(self, input)
         self.name = conv_module_name_filter(self.__repr__())
@@ -118,11 +116,12 @@ def module_profiling(self, input, output, verbose):
         if (not getattr(self, 'ignore_model_profiling', False) and
                 self.n_macs == 0 and
                 t not in ignore_zeros_t):
-            print('WARNING: leaf module {} has zero n_macs.'.format(type(self)))
+            print(
+                'WARNING: leaf module {} has zero n_macs.'.format(type(self)))
         return
     if verbose:
         print(
-             self.name.ljust(name_space, ' ') +
+            self.name.ljust(name_space, ' ') +
             '{:,}'.format(self.n_params).rjust(params_space, ' ') +
             '{:,}'.format(self.n_macs).rjust(macs_space, ' ') +
             '{:,}'.format(self.n_seconds).rjust(seconds_space, ' '))
@@ -164,8 +163,6 @@ def model_profiling(model, height, width, batch=1, channel=3, use_cuda=True,
 
     """
     model.eval()
-    macs = 0
-
     data = torch.rand(batch, channel, height, width)
     device = torch.device("cuda:0" if use_cuda else "cpu")
     model = model.to(device)
@@ -178,7 +175,7 @@ def model_profiling(model, height, width, batch=1, channel=3, use_cuda=True,
         'nanosecs'.rjust(seconds_space, ' '))
     if verbose:
         print(''.center(name_space+params_space+macs_space+seconds_space, '-'))
-    out = model(data)
+    model(data)
     if verbose:
         print(''.center(name_space+params_space+macs_space+seconds_space, '-'))
     print(

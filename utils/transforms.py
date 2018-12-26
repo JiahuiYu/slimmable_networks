@@ -2,7 +2,6 @@
 pytorch (0.3.1) miss some transforms, will be removed after official support.
 """
 import numpy as np
-import random
 from PIL import Image
 
 
@@ -25,7 +24,6 @@ class Lighting(object):
         assert eigvec.shape == (3, 3)
         self.eigval = eigval
         self.eigvec = eigvec
-
 
     def __call__(self, img):
         if self.alphastd == 0.:

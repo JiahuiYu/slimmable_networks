@@ -1,6 +1,3 @@
-import io
-import numpy as np
-from PIL import Image
 
 
 class Meter(object):
@@ -42,7 +39,6 @@ class ScalarMeter(Meter):
     def flush(self, value, step=-1, reset=True):
         if reset:
             self.reset()
-
 
 
 def flush_scalar_meters(meters, method='avg'):

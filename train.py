@@ -1,4 +1,3 @@
-import argparse
 import importlib
 import os
 import time
@@ -134,14 +133,14 @@ def get_lr_scheduler(optimizer):
                 lr_dict[i] = 1
             else:
                 lr_dict[i] = lr_dict[i-1] * FLAGS.exp_decaying_lr_gamma
-        lr_lambda = lambda epoch: lr_dict[epoch]
+        lr_lambda = lambda epoch: lr_dict[epoch]  # noqa: E731
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
             optimizer, lr_lambda=lr_lambda)
     elif FLAGS.lr_scheduler == 'linear_decaying':
         lr_dict = {}
         for i in range(FLAGS.num_epochs):
             lr_dict[i] = 1. - i / FLAGS.num_epochs
-        lr_lambda = lambda epoch: lr_dict[epoch]
+        lr_lambda = lambda epoch: lr_dict[epoch]  # noqa: E731
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
             optimizer, lr_lambda=lr_lambda)
     else:
@@ -170,7 +169,7 @@ def get_optimizer(model):
             else:
                 weight_decay = 0
             item = {'params': params, 'weight_decay': weight_decay,
-                    'lr':FLAGS.lr, 'momentum': FLAGS.momentum,
+                    'lr': FLAGS.lr, 'momentum': FLAGS.momentum,
                     'nesterov': FLAGS.nesterov}
             model_params.append(item)
         optimizer = torch.optim.SGD(model_params)
@@ -418,7 +417,7 @@ def train_val_test():
         torch.save(
             {
                 'model': model_wrapper.state_dict(),
-                'optimizer' : optimizer.state_dict(),
+                'optimizer': optimizer.state_dict(),
                 'last_epoch': epoch,
                 'best_val': best_val,
                 'meters': (train_meters, val_meters),
@@ -430,6 +429,7 @@ def train_val_test():
 def main():
     """train and eval model"""
     train_val_test()
+
 
 if __name__ == "__main__":
     main()
