@@ -19,7 +19,7 @@ Illustration of slimmable neural networks. The same model can run at different w
     * Command: `python train.py app:{apps/***.yml}`. `{apps/***.yml}` is config file. Do not miss `app:` prefix.
     * Training and testing of MSCOCO benchmarks are released under branch [detection](https://github.com/JiahuiYu/slimmable_networks/tree/detection).
 2. Still have questions?
-    * If you still have questions, please search closed issues first. If the problem is not solved, please open a new issue. I check issues on Wednesday and Saturday regularly.
+    * If you still have questions, please search closed issues first. If the problem is not solved, please open a new.
 
 
 ## Model Zoo
