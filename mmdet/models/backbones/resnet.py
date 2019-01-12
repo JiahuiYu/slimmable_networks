@@ -1,15 +1,89 @@
 import logging
 
+import torch
 import torch.nn as nn
 import torch.utils.checkpoint as cp
 
 from mmcv.cnn import constant_init, kaiming_init
-from mmcv.runner import load_checkpoint
+from mmcv.runner import load_checkpoint as official_load_checkpoint
+
+
+import mmdet.flags as FLAGS
+
+
+class SwitchableBatchNorm2d(nn.Module):
+     def __init__(self, num_features_list):
+         super(SwitchableBatchNorm2d, self).__init__()
+         self.num_features_list = num_features_list
+         self.num_features = max(self.num_features_list)
+         self.width_mult = FLAGS.width_mult #  FLAGS.width_max_mult
+         self.onehot = torch.zeros(1, self.num_features, 1, 1)
+         self.ignore_model_profiling = True
+         self.bn = nn.ModuleList(
+             [nn.BatchNorm2d(i) for i in num_features_list])
+
+     def forward(self, input):
+         y = self.bn[FLAGS.width_mult_list.index(self.width_mult)](input)
+         return y
+
+
+class SlimmableConv2d(nn.Conv2d):
+    def __init__(self, in_channels_list, out_channels_list,
+                 kernel_size, stride=1, padding=0, dilation=1,
+                 groups_list=[1], bias=True):
+        super(SlimmableConv2d, self).__init__(
+            max(in_channels_list), max(out_channels_list),
+            kernel_size, stride=stride, padding=padding, dilation=dilation,
+            groups=max(groups_list), bias=bias)
+        self.in_channels_list = in_channels_list
+        self.out_channels_list = out_channels_list
+        self.groups_list = groups_list
+        if self.groups_list == [1]:
+            self.groups_list = [1 for _ in range(len(in_channels_list))]
+        self.current_in_channels = -1
+        self.current_out_channels = -1
+        self.current_groups = -1
+        self.width_mult = FLAGS.width_mult
+        self.ignore_model_profiling = True
+
+    def forward(self, input):
+        weight = self.weight[
+            0:self.current_out_channels, 0:self.current_in_channels, :, :]
+        if self.bias:
+            bias = self.bias[0:self.current_out_channels]
+        else:
+            bias = self.bias
+        y = nn.functional.conv2d(
+            input, weight, bias, self.stride, self.padding,
+            self.dilation, self.current_groups)
+        return y
+
+
+def load_checkpoint(m, pretrained, strict=False, logger=None):
+    """Docstring for load_checkpoint"""
+    checkpoint = torch.load(pretrained, map_location=lambda storage, loc: storage)
+    # update keys from external models
+    if type(checkpoint) == dict and 'model' in checkpoint:
+        checkpoint = checkpoint['model']
+    new_checkpoint = {}
+    new_keys = list(m.state_dict().keys())
+    keys = []
+    for k in new_keys:
+        if 'num_batches_tracked' in k:
+            continue
+        keys.append(k)
+    new_keys = keys
+    old_keys = list(checkpoint.keys())
+    for key_new, key_old in zip(new_keys, old_keys):
+        new_checkpoint[key_new] = checkpoint[key_old]
+        # print('remap {} to {}'.format(key_new, key_old))
+    checkpoint = new_checkpoint
+    m.load_state_dict(checkpoint)
 
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
     "3x3 convolution with padding"
-    return nn.Conv2d(
+    return SlimmableConv2d(
         in_planes,
         out_planes,
         kernel_size=3,
@@ -83,9 +157,10 @@ class Bottleneck(nn.Module):
         else:
             conv1_stride = stride
             conv2_stride = 1
-        self.conv1 = nn.Conv2d(
+        self.conv1 = SlimmableConv2d(
             inplanes, planes, kernel_size=1, stride=conv1_stride, bias=False)
-        self.conv2 = nn.Conv2d(
+        self.bn1 = SwitchableBatchNorm2d(planes)
+        self.conv2 = SlimmableConv2d(
             planes,
             planes,
             kernel_size=3,
@@ -94,11 +169,10 @@ class Bottleneck(nn.Module):
             dilation=dilation,
             bias=False)
 
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(
-            planes, planes * self.expansion, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(planes * self.expansion)
+        self.bn2 = SwitchableBatchNorm2d(planes)
+        self.conv3 = SlimmableConv2d(
+            planes, [i * self.expansion for i in planes], kernel_size=1, bias=False)
+        self.bn3 = SwitchableBatchNorm2d([i * self.expansion for i in planes])
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
         self.stride = stride
@@ -149,13 +223,13 @@ def make_res_layer(block,
     downsample = None
     if stride != 1 or inplanes != planes * block.expansion:
         downsample = nn.Sequential(
-            nn.Conv2d(
+            SlimmableConv2d(
                 inplanes,
-                planes * block.expansion,
+                [i * block.expansion for i in planes],
                 kernel_size=1,
                 stride=stride,
                 bias=False),
-            nn.BatchNorm2d(planes * block.expansion),
+            SwitchableBatchNorm2d([i * block.expansion for i in planes]),
         )
 
     layers = []
@@ -168,7 +242,7 @@ def make_res_layer(block,
             downsample,
             style=style,
             with_cp=with_cp))
-    inplanes = planes * block.expansion
+    inplanes = [i * block.expansion for i in planes]
     for i in range(1, blocks):
         layers.append(
             block(inplanes, planes, 1, dilation, style=style, with_cp=with_cp))
@@ -232,10 +306,10 @@ class ResNet(nn.Module):
         self.bn_frozen = bn_frozen
         self.with_cp = with_cp
 
-        self.inplanes = 64
-        self.conv1 = nn.Conv2d(
-            3, 64, kernel_size=7, stride=2, padding=3, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
+        self.inplanes = [int(i*64) for i in FLAGS.width_mult_list]
+        self.conv1 = SlimmableConv2d(
+            [3 for _ in range(len(FLAGS.width_mult_list))], self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
+        self.bn1 = SwitchableBatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
@@ -243,7 +317,7 @@ class ResNet(nn.Module):
         for i, num_blocks in enumerate(stage_blocks):
             stride = strides[i]
             dilation = dilations[i]
-            planes = 64 * 2**i
+            planes = [int(j * 64 * 2**i) for j in FLAGS.width_mult_list]
             res_layer = make_res_layer(
                 block,
                 self.inplanes,
@@ -253,7 +327,7 @@ class ResNet(nn.Module):
                 dilation=dilation,
                 style=self.style,
                 with_cp=with_cp)
-            self.inplanes = planes * block.expansion
+            self.inplanes = [int(j * block.expansion) for j in planes]
             layer_name = 'layer{}'.format(i + 1)
             self.add_module(layer_name, res_layer)
             self.res_layers.append(layer_name)
@@ -263,10 +337,10 @@ class ResNet(nn.Module):
     def init_weights(self, pretrained=None):
         if isinstance(pretrained, str):
             logger = logging.getLogger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
+            load_checkpoint(self, FLAGS.pretrained, strict=False, logger=logger)
         elif pretrained is None:
             for m in self.modules():
-                if isinstance(m, nn.Conv2d):
+                if isinstance(m, SlimmableConv2d):
                     kaiming_init(m)
                 elif isinstance(m, nn.BatchNorm2d):
                     constant_init(m, 1)
@@ -283,7 +357,12 @@ class ResNet(nn.Module):
             res_layer = getattr(self, layer_name)
             x = res_layer(x)
             if i in self.out_indices:
-                outs.append(x)
+                if FLAGS.width_mult_current < 1.0:
+                    bs = x.size()
+                    y = torch.cat([x, torch.cuda.FloatTensor(bs[0], int((1-FLAGS.width_mult_current) * (bs[1]/FLAGS.width_mult_current)), bs[2], bs[3]).fill_(0)], 1)
+                else:
+                    y = x
+                outs.append(y)
         if len(outs) == 1:
             return outs[0]
         else:
@@ -293,21 +372,34 @@ class ResNet(nn.Module):
         super(ResNet, self).train(mode)
         if self.bn_eval:
             for m in self.modules():
-                if isinstance(m, nn.BatchNorm2d):
+                if isinstance(m, nn.BatchNorm2d) or isinstance(m, SwitchableBatchNorm2d):
                     m.eval()
-                    if self.bn_frozen:
-                        for params in m.parameters():
-                            params.requires_grad = False
+                    for params in m.parameters():
+                        params.requires_grad = False
         if mode and self.frozen_stages >= 0:
             for param in self.conv1.parameters():
                 param.requires_grad = False
             for param in self.bn1.parameters():
                 param.requires_grad = False
-            self.bn1.eval()
-            self.bn1.weight.requires_grad = False
-            self.bn1.bias.requires_grad = False
+            # slimmable
+            for bn in self.bn1.bn:
+                for param in bn.parameters():
+                    param.requires_grad = False
+                bn.eval()
+                bn.weight.requires_grad = False
+                bn.bias.requires_grad = False
             for i in range(1, self.frozen_stages + 1):
                 mod = getattr(self, 'layer{}'.format(i))
                 mod.eval()
                 for param in mod.parameters():
                     param.requires_grad = False
+
+            self.apply(lambda m: freeze_params(m) if isinstance(m, SwitchableBatchNorm2d) else None)
+
+
+def freeze_params(m):
+    """Freeze all the weights by setting requires_grad to False
+    """
+    for p in m.parameters():
+        p.requires_grad = False
+        # print(p.size())

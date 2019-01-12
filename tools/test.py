@@ -10,6 +10,9 @@ from mmdet.core import results2json, coco_eval
 from mmdet.datasets import build_dataloader
 from mmdet.models import build_detector, detectors
 
+import os
+import mmdet.flags as FLAGS
+
 
 def single_test(model, data_loader, show=False):
     model.eval()
@@ -54,12 +57,37 @@ def parse_args():
         choices=['proposal', 'proposal_fast', 'bbox', 'segm', 'keypoints'],
         help='eval types')
     parser.add_argument('--show', action='store_true', help='show results')
+    parser.add_argument(
+        '--width_mult',
+        default=1.0,
+        type=float,
+        help='Width mult')
     args = parser.parse_args()
     return args
 
 
+def set_width_mult(m, width_mult):
+     if hasattr(m, 'width_mult'):
+         m.width_mult = width_mult
+         if hasattr(m, 'onehot'):
+             m.onehot[:, :, :, :] = 0.
+             channels = m.num_features_list[
+                 FLAGS.width_mult_list.index(m.width_mult)]
+             m.onehot[:, :channels, :, :] = 1.
+         elif hasattr(m, 'in_channels_list'):
+             m.current_in_channels = m.in_channels_list[
+                 FLAGS.width_mult_list.index(m.width_mult)]
+             m.current_out_channels = m.out_channels_list[
+                 FLAGS.width_mult_list.index(m.width_mult)]
+             m.current_groups = m.groups_list[
+                 FLAGS.width_mult_list.index(m.width_mult)]
+         else:
+             pass
+
+
 def main():
     args = parse_args()
+    FLAGS.width_mult_test_list = [args.width_mult]
 
     if args.out is not None and not args.out.endswith(('.pkl', '.pickle')):
         raise ValueError('The output file must be a pkl file.')
@@ -74,15 +102,31 @@ def main():
             cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
         load_checkpoint(model, args.checkpoint)
         model = MMDataParallel(model, device_ids=[0])
-
-        data_loader = build_dataloader(
-            dataset,
-            imgs_per_gpu=1,
-            workers_per_gpu=cfg.data.workers_per_gpu,
-            num_gpus=1,
-            dist=False,
-            shuffle=False)
-        outputs = single_test(model, data_loader, args.show)
+        for width_mult in FLAGS.width_mult_test_list:
+            args.out = os.path.join('/tmp', 'results_{}.pkl'.format(width_mult))
+            print('Start to inference at width: {}x'.format(width_mult))
+            FLAGS.width_mult_current = width_mult
+            model.apply(lambda m: set_width_mult(m, width_mult=width_mult))
+            data_loader = build_dataloader(
+                dataset,
+                imgs_per_gpu=1,
+                workers_per_gpu=cfg.data.workers_per_gpu,
+                num_gpus=1,
+                dist=False,
+                shuffle=False)
+            outputs = single_test(model, data_loader, args.show)
+            if args.out:
+                print('writing results to {}'.format(args.out))
+                mmcv.dump(outputs, args.out)
+                eval_types = args.eval
+                if eval_types:
+                    print('Starting evaluate {}'.format(' and '.join(eval_types)))
+                    if eval_types == ['proposal_fast']:
+                        result_file = args.out
+                    else:
+                        result_file = args.out + '.json'
+                        results2json(dataset, outputs, result_file)
+                    coco_eval(result_file, eval_types, dataset.coco)
     else:
         model_args = cfg.model.copy()
         model_args.update(train_cfg=None, test_cfg=cfg.test_cfg)
@@ -96,18 +140,18 @@ def main():
             range(args.gpus),
             workers_per_gpu=args.proc_per_gpu)
 
-    if args.out:
-        print('writing results to {}'.format(args.out))
-        mmcv.dump(outputs, args.out)
-        eval_types = args.eval
-        if eval_types:
-            print('Starting evaluate {}'.format(' and '.join(eval_types)))
-            if eval_types == ['proposal_fast']:
-                result_file = args.out
-            else:
-                result_file = args.out + '.json'
-                results2json(dataset, outputs, result_file)
-            coco_eval(result_file, eval_types, dataset.coco)
+    # if args.out:
+        # print('writing results to {}'.format(args.out))
+        # mmcv.dump(outputs, args.out)
+        # eval_types = args.eval
+        # if eval_types:
+            # print('Starting evaluate {}'.format(' and '.join(eval_types)))
+            # if eval_types == ['proposal_fast']:
+                # result_file = args.out
+            # else:
+                # result_file = args.out + '.json'
+                # results2json(dataset, outputs, result_file)
+            # coco_eval(result_file, eval_types, dataset.coco)
 
 
 if __name__ == '__main__':

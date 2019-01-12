@@ -1,3 +1,5 @@
-from .version import __version__, short_version
+# from .version import __version__, short_version
 
-__all__ = ['__version__', 'short_version']
+# __all__ = ['__version__', 'short_version']
+__version__ = '0.0.0'
+short_version = __version__
