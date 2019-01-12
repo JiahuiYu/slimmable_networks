@@ -25,11 +25,21 @@ Illustration of slimmable neural networks. The same model can run at different w
     * If you still have questions, please search closed issues first. If the problem is not solved, please open a new.
 
 
+## Technical Details
+
+Implementing slimmable networks for detection is straightforward as shown in this single commit [8bc1dd8](https://github.com/JiahuiYu/slimmable_networks/commit/8bc1dd80490f8b8e3fd8ffe249c4fbf6dc4b9910).
+
+
 ## License
 
 CC 4.0 Attribution-NonCommercial International
 
 The software is for educaitonal and academic research purpose only.
+
+
+## Acknowledgement
+
+We would like to thank mmlab team for the detection toolbox mmdetection.
 
 
 ## Citing
