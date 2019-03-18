@@ -2,8 +2,7 @@ import math
 import torch.nn as nn
 
 
-from .slimmable_ops import SwitchableBatchNorm2d
-from .slimmable_ops import SlimmableConv2d, SlimmableLinear, make_divisible
+from .slimmable_ops import USBatchNorm2d, USConv2d, USLinear, make_divisible
 from utils.config import FLAGS
 
 
@@ -13,20 +12,20 @@ class DepthwiseSeparableConv(nn.Module):
         assert stride in [1, 2]
 
         layers = [
-            SlimmableConv2d(
-                inp, inp, 3, stride, 1, groups_list=inp, bias=False),
-            SwitchableBatchNorm2d(inp),
+            USConv2d(
+                inp, inp, 3, stride, 1, groups=inp, depthwise=True,
+                bias=False),
+            USBatchNorm2d(inp),
             nn.ReLU6(inplace=True),
 
-            SlimmableConv2d(inp, outp, 1, 1, 0, bias=False),
-            SwitchableBatchNorm2d(outp),
+            USConv2d(inp, outp, 1, 1, 0, bias=False),
+            USBatchNorm2d(outp),
             nn.ReLU6(inplace=True),
         ]
         self.body = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.body(x)
-
 
 class Model(nn.Module):
     def __init__(self, num_classes=1000, input_size=224):
@@ -44,29 +43,24 @@ class Model(nn.Module):
 
         self.features = []
 
+        width_mult = FLAGS.width_mult_range[-1]
         # head
         assert input_size % 32 == 0
-        channels = [
-            make_divisible(32 * width_mult)
-            for width_mult in FLAGS.width_mult_list]
-        self.outp = [
-            make_divisible(1024 * width_mult)
-            for width_mult in FLAGS.width_mult_list]
+        channels = make_divisible(32 * width_mult)
+        self.outp = make_divisible(1024 * width_mult)
         first_stride = 2
         self.features.append(
             nn.Sequential(
-                SlimmableConv2d(
-                    [3 for _ in range(len(channels))], channels, 3,
-                    first_stride, 1, bias=False),
-                SwitchableBatchNorm2d(channels),
+                USConv2d(
+                    3, channels, 3, first_stride, 1, bias=False,
+                    us=[False, True]),
+                USBatchNorm2d(channels),
                 nn.ReLU6(inplace=True))
         )
 
         # body
         for c, n, s in self.block_setting:
-            outp = [
-                make_divisible(c * width_mult)
-                for width_mult in FLAGS.width_mult_list]
+            outp = make_divisible(c * width_mult)
             for i in range(n):
                 if i == 0:
                     self.features.append(
@@ -76,7 +70,7 @@ class Model(nn.Module):
                         DepthwiseSeparableConv(channels, outp, 1))
                 channels = outp
 
-        avg_pool_size = input_size // 32
+        avg_pool_size = input_size// 32
         self.features.append(nn.AvgPool2d(avg_pool_size))
 
         # make it nn.Sequential
@@ -84,10 +78,7 @@ class Model(nn.Module):
 
         # classifier
         self.classifier = nn.Sequential(
-            SlimmableLinear(
-                self.outp,
-                [num_classes for _ in range(len(self.outp))]
-            )
+            USLinear(self.outp, num_classes, us=[True, False])
         )
         if FLAGS.reset_parameters:
             self.reset_parameters()
