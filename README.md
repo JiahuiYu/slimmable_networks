@@ -13,7 +13,7 @@ Illustration of slimmable neural networks. The same model can run at different w
 
 [Preprint](https://arxiv.org/abs/1903.05134) | [Model Zoo](/MODEL_ZOO) | [BibTex](#citing)
 
-<img src="https://user-images.githubusercontent.com/22609465/54562105-43068900-4994-11e9-841f-8fed9b80b909.png" width=95%/>
+<img src="https://user-images.githubusercontent.com/22609465/54562571-45b5ae00-4995-11e9-8984-49e32d07e325.png" width=95%/>
 
 Illustration of universally slimmable networks. The same model can run at **arbitrary** widths.
 
