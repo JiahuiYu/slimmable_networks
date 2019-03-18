@@ -12,7 +12,7 @@ class Block(nn.Module):
         super(Block, self).__init__()
         assert stride in [1, 2]
 
-        midp = [i//4 for i in outp]
+        midp = [i // 4 for i in outp]
         layers = [
             SlimmableConv2d(inp, midp, 1, 1, 0, bias=False),
             SwitchableBatchNorm2d(midp),
@@ -79,7 +79,7 @@ class Model(nn.Module):
         # body
         for stage_id, n in enumerate(self.block_setting):
             outp = [
-                int(feats[stage_id]*width_mult*4)
+                int(feats[stage_id] * width_mult * 4)
                 for width_mult in FLAGS.width_mult_list]
             for i in range(n):
                 if i == 0 and stage_id != 0:
@@ -88,7 +88,7 @@ class Model(nn.Module):
                     self.features.append(Block(channels, outp, 1))
                 channels = outp
 
-        avg_pool_size = input_size//32
+        avg_pool_size = input_size // 32
         self.features.append(nn.AvgPool2d(avg_pool_size))
 
         # make it nn.Sequential

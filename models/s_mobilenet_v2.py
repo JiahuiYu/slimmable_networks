@@ -31,7 +31,7 @@ class InvertedResidual(nn.Module):
 
         layers = []
         # expand
-        expand_inp = [i*expand_ratio for i in inp]
+        expand_inp = [i * expand_ratio for i in inp]
         if expand_ratio != 1:
             layers += [
                 SlimmableConv2d(inp, expand_inp, 1, 1, 0, bias=False),
@@ -120,7 +120,7 @@ class Model(nn.Module):
                 nn.ReLU6(inplace=True),
             )
         )
-        avg_pool_size = input_size//32
+        avg_pool_size = input_size // 32
         self.features.append(nn.AvgPool2d(avg_pool_size))
 
         # make it nn.Sequential
