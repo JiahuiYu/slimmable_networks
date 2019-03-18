@@ -1,17 +1,15 @@
 # Slimmable Networks
 
+An open-source framework for slimmable training on ImageNet classification and COCO detection, which enables numerous projects.
 
-## Slimmable Neural Networks
-[ICLR 2019 Paper](https://arxiv.org/abs/1812.08928) | [OpenReview](https://openreview.net/forum?id=H1gMCsAqY7) | [Detection](https://github.com/JiahuiYu/slimmable_networks/tree/detection) | [Model Zoo](/MODEL_ZOO) | [BibTex](#citing)
+Slimmable Neural Networks, [ICLR 2019 Paper](https://arxiv.org/abs/1812.08928) | [OpenReview](https://openreview.net/forum?id=H1gMCsAqY7) | [Detection](https://github.com/JiahuiYu/slimmable_networks/tree/detection) | [Model Zoo](/MODEL_ZOO.md) | [BibTex](#citing)
 
 <img src="https://user-images.githubusercontent.com/22609465/50390872-1b3fb600-0702-11e9-8034-d0f41825d775.png" width=95%/>
 
 Illustration of slimmable neural networks. The same model can run at different widths (number of active channels), permitting instant and adaptive accuracy-efficiency trade-offs.
 
 
-## Universally Slimmable Networks and Improved Training Techniques
-
-[Preprint](https://arxiv.org/abs/1903.05134) | [Model Zoo](/MODEL_ZOO) | [BibTex](#citing)
+Universally Slimmable Networks and Improved Training Techniques, [Preprint](https://arxiv.org/abs/1903.05134) | [Model Zoo](/MODEL_ZOO.md) | [BibTex](#citing)
 
 <img src="https://user-images.githubusercontent.com/22609465/54562571-45b5ae00-4995-11e9-8984-49e32d07e325.png" width=95%/>
 
