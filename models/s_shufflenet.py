@@ -16,7 +16,7 @@ class ShuffleModule(nn.Module):
 
     def forward(self, x):
         b, n, h, w = x.size()
-        x = x.view(b, self.groups, n//self.groups, h, w)
+        x = x.view(b, self.groups, n // self.groups, h, w)
         x = torch.transpose(x, 1, 2).contiguous()
         x = x.view(b, -1, h, w)
         return x
@@ -41,10 +41,10 @@ class Block(nn.Module):
         else:
             self.first_group = FLAGS.groups
 
-        inp_split = [i//self.first_group for i in inp]
-        midp = [i//FLAGS.width_compress for i in outp]
-        lastp = [i//FLAGS.groups for i in block_outp]
-        firstp = [i//FLAGS.groups for i in midp]
+        inp_split = [i // self.first_group for i in inp]
+        midp = [i // FLAGS.width_compress for i in outp]
+        lastp = [i // FLAGS.groups for i in block_outp]
+        firstp = [i // FLAGS.groups for i in midp]
         self.firstp = firstp
         self.inp = inp
         self.midp = midp
@@ -75,8 +75,8 @@ class Block(nn.Module):
             SwitchableBatchNorm2d(midp),
             # nn.ReLU(inplace=True),
         ]
-        midp_split = [i//FLAGS.groups for i in midp]
-        lastp = [i//FLAGS.groups for i in block_outp]
+        midp_split = [i // FLAGS.groups for i in midp]
+        lastp = [i // FLAGS.groups for i in block_outp]
         layers_c = [
             nn.Sequential(
                 SlimmableConv2d(midp_split, lastp, 1, 1, 0, bias=False),
@@ -98,12 +98,14 @@ class Block(nn.Module):
     def forward(self, x):
         if self.residual_connection:
             res = x
-            x_split = torch.split(res, list(res.size())[1]//self.a_len, dim=1)
+            x_split = torch.split(
+                res, list(res.size())[1] // self.a_len, dim=1)
             res = torch.cat(
                 [getattr(self, 'a_{}'.format(i))(x_split[i]) for i in range(
                     self.a_len)], 1)
             res = self.b(res)
-            x_split = torch.split(res, list(res.size())[1]//self.c_len, dim=1)
+            x_split = torch.split(
+                res, list(res.size())[1] // self.c_len, dim=1)
             res = torch.cat(
                 [getattr(self, 'c_{}'.format(i))(x_split[i]) for i in range(
                     self.c_len)], 1)
@@ -118,12 +120,13 @@ class Block(nn.Module):
                         self.a_len)], 1)
             else:
                 x_split = torch.split(
-                    res, list(res.size())[1]//self.a_len, dim=1)
+                    res, list(res.size())[1] // self.a_len, dim=1)
                 res = torch.cat(
                     [getattr(self, 'a_{}'.format(i))(
                         x_split[i]) for i in range(self.a_len)], 1)
             res = self.b(res)
-            x_split = torch.split(res, list(res.size())[1]//self.c_len, dim=1)
+            x_split = torch.split(
+                res, list(res.size())[1] // self.c_len, dim=1)
             res = torch.cat(
                 [getattr(self, 'c_{}'.format(i))(x_split[i]) for i in range(
                     self.c_len)], 1)
@@ -161,9 +164,10 @@ class Model(nn.Module):
 
         self.features = []
 
-        channels = [int(24*width_mult) for width_mult in FLAGS.width_mult_list]
+        channels = [
+            int(24 * width_mult) for width_mult in FLAGS.width_mult_list]
         first_stride = 2
-        group_channels = [i//FLAGS.groups for i in channels]
+        group_channels = [i // FLAGS.groups for i in channels]
         head = [
             nn.Sequential(
                 SlimmableConv2d(
@@ -179,11 +183,12 @@ class Model(nn.Module):
             setattr(self, 'head_{}'.format(i), head[i])
 
         for c, s in self.block_setting:
-            outp = [int(c*width_mult) for width_mult in FLAGS.width_mult_list]
+            outp = [
+                int(c * width_mult) for width_mult in FLAGS.width_mult_list]
             self.features.append(Block(channels, outp, s))
             channels = outp
 
-        avg_pool_size = input_size//32
+        avg_pool_size = input_size // 32
         self.features.append(nn.AvgPool2d(avg_pool_size))
 
         # make it nn.Sequential
@@ -191,9 +196,9 @@ class Model(nn.Module):
 
         # classifier
         self.classifier = nn.Sequential(
-          SlimmableLinear(
-            channels,
-            [num_classes for _ in range(len(channels))])
+            SlimmableLinear(
+                channels,
+                [num_classes for _ in range(len(channels))])
         )
         if FLAGS.reset_parameters:
             self.reset_parameters()

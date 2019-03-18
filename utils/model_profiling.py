@@ -131,9 +131,8 @@ def module_profiling(self, input, output, verbose):
 def add_profiling_hooks(m, verbose):
     global model_profiling_hooks
     model_profiling_hooks.append(
-      m.register_forward_hook(
-        lambda m, input, output: module_profiling(
-          m, input, output, verbose=verbose)))
+        m.register_forward_hook(lambda m, input, output: module_profiling(
+            m, input, output, verbose=verbose)))
 
 
 def remove_profiling_hooks():
@@ -174,10 +173,12 @@ def model_profiling(model, height, width, batch=1, channel=3, use_cuda=True,
         'macs'.rjust(macs_space, ' ') +
         'nanosecs'.rjust(seconds_space, ' '))
     if verbose:
-        print(''.center(name_space+params_space+macs_space+seconds_space, '-'))
+        print(''.center(
+            name_space + params_space + macs_space + seconds_space, '-'))
     model(data)
     if verbose:
-        print(''.center(name_space+params_space+macs_space+seconds_space, '-'))
+        print(''.center(
+            name_space + params_space + macs_space + seconds_space, '-'))
     print(
         'Total'.ljust(name_space, ' ') +
         '{:,}'.format(model.n_params).rjust(params_space, ' ') +

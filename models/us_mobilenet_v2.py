@@ -2,8 +2,7 @@ import math
 import torch.nn as nn
 
 
-from .slimmable_ops import SwitchableBatchNorm2d, SlimmableConv2d
-from .slimmable_ops import make_divisible
+from .slimmable_ops import USBatchNorm2d, USConv2d, USLinear, make_divisible
 from utils.config import FLAGS
 
 
@@ -16,22 +15,28 @@ class InvertedResidual(nn.Module):
 
         layers = []
         # expand
-        expand_inp = [i * expand_ratio for i in inp]
+        expand_inp = inp * expand_ratio
         if expand_ratio != 1:
             layers += [
-                SlimmableConv2d(inp, expand_inp, 1, 1, 0, bias=False),
-                SwitchableBatchNorm2d(expand_inp),
+                USConv2d(
+                    inp, expand_inp, 1, 1, 0, bias=False,
+                    ratio=[1, expand_ratio]),
+                USBatchNorm2d(expand_inp, ratio=expand_ratio),
                 nn.ReLU6(inplace=True),
             ]
         # depthwise + project back
         layers += [
-            SlimmableConv2d(
-                expand_inp, expand_inp, 3, stride, 1,
-                groups_list=expand_inp, bias=False),
-            SwitchableBatchNorm2d(expand_inp),
-            nn.ReLU6(inplace=True),
-            SlimmableConv2d(expand_inp, outp, 1, 1, 0, bias=False),
-            SwitchableBatchNorm2d(outp),
+                USConv2d(
+                    expand_inp, expand_inp, 3, stride, 1, groups=expand_inp,
+                    depthwise=True, bias=False,
+                    ratio=[expand_ratio, expand_ratio]),
+                USBatchNorm2d(expand_inp, ratio=expand_ratio),
+                nn.ReLU6(inplace=True),
+
+                USConv2d(
+                    expand_inp, outp, 1, 1, 0, bias=False,
+                    ratio=[expand_ratio, 1]),
+                USBatchNorm2d(outp),
         ]
         self.body = nn.Sequential(*layers)
 
@@ -59,32 +64,30 @@ class Model(nn.Module):
             [6, 160, 3, 2],
             [6, 320, 1, 1],
         ]
+        if FLAGS.dataset == 'cifar10':
+            self.block_setting[2] = [6, 24, 2, 1]
 
         self.features = []
 
+        width_mult = FLAGS.width_mult_range[-1]
         # head
         assert input_size % 32 == 0
-        channels = [
-            make_divisible(32 * width_mult)
-            for width_mult in FLAGS.width_mult_list]
+        channels = make_divisible(32 * width_mult)
         self.outp = make_divisible(
-            1280 * max(FLAGS.width_mult_list)) if max(
-                FLAGS.width_mult_list) > 1.0 else 1280
+            1280 * width_mult) if width_mult > 1.0 else 1280
         first_stride = 2
         self.features.append(
             nn.Sequential(
-                SlimmableConv2d(
-                    [3 for _ in range(len(channels))], channels, 3,
-                    first_stride, 1, bias=False),
-                SwitchableBatchNorm2d(channels),
+                USConv2d(
+                    3, channels, 3, first_stride, 1, bias=False,
+                    us=[False, True]),
+                USBatchNorm2d(channels),
                 nn.ReLU6(inplace=True))
         )
 
         # body
         for t, c, n, s in self.block_setting:
-            outp = [
-                make_divisible(c * width_mult)
-                for width_mult in FLAGS.width_mult_list]
+            outp = make_divisible(c * width_mult)
             for i in range(n):
                 if i == 0:
                     self.features.append(
@@ -97,10 +100,9 @@ class Model(nn.Module):
         # tail
         self.features.append(
             nn.Sequential(
-                SlimmableConv2d(
-                    channels,
-                    [self.outp for _ in range(len(channels))],
-                    1, 1, 0, bias=False),
+                USConv2d(
+                    channels, self.outp, 1, 1, 0, bias=False,
+                    us=[True, False]),
                 nn.BatchNorm2d(self.outp),
                 nn.ReLU6(inplace=True),
             )
@@ -130,8 +132,9 @@ class Model(nn.Module):
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.BatchNorm2d):
-                m.weight.data.fill_(1)
-                m.bias.data.zero_()
+                if m.affine:
+                    m.weight.data.fill_(1)
+                    m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
                 n = m.weight.size(1)
                 m.weight.data.normal_(0, 0.01)

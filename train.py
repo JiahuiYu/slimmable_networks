@@ -132,15 +132,15 @@ def get_lr_scheduler(optimizer):
             if i == 0:
                 lr_dict[i] = 1
             else:
-                lr_dict[i] = lr_dict[i-1] * FLAGS.exp_decaying_lr_gamma
-        lr_lambda = lambda epoch: lr_dict[epoch]  # noqa: E731
+                lr_dict[i] = lr_dict[i - 1] * FLAGS.exp_decaying_lr_gamma
+        lr_lambda = lambda epoch: lr_dict[epoch]
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
             optimizer, lr_lambda=lr_lambda)
     elif FLAGS.lr_scheduler == 'linear_decaying':
         lr_dict = {}
         for i in range(FLAGS.num_epochs):
             lr_dict[i] = 1. - i / FLAGS.num_epochs
-        lr_lambda = lambda epoch: lr_dict[epoch]  # noqa: E731
+        lr_lambda = lambda epoch: lr_dict[epoch]
         lr_scheduler = torch.optim.lr_scheduler.LambdaLR(
             optimizer, lr_lambda=lr_lambda)
     else:
@@ -248,7 +248,7 @@ def forward_loss(model, criterion, input, target, meter):
     correct = pred.eq(target.view(1, -1).expand_as(pred))
     for k in FLAGS.topk:
         correct_k = correct[:k].float().sum(0)
-        error_list = list(1.-correct_k.cpu().detach().numpy())
+        error_list = list(1. - correct_k.cpu().detach().numpy())
         meter['top{}_error'.format(k)].cache_list(error_list)
     return loss
 
@@ -271,7 +271,8 @@ def run_one_epoch(
         other_widths.remove(min_width)
     if train and FLAGS.lr_scheduler == 'linear_decaying':
         linear_decaying_per_step = (
-            FLAGS.lr/FLAGS.num_epochs/len(loader.dataset)*FLAGS.batch_size)
+            FLAGS.lr / FLAGS.num_epochs /
+            len(loader.dataset) * FLAGS.batch_size)
     for batch_idx, (input, target) in enumerate(loader):
         target = target.cuda(non_blocking=True)
         if train:
@@ -311,8 +312,8 @@ def run_one_epoch(
                                               for k, v in results.items()))
     else:
         results = flush_scalar_meters(meters)
-        print('{:.1f}s\t{}\t{}/{}: '.format(
-            time.time() - t_start, phase, epoch, FLAGS.num_epochs) +
+        print('{:.1f}s\t{}\t{}/{}: '.format(time.time() - t_start,
+                                            phase, epoch, FLAGS.num_epochs) +
               ', '.join('{}: {:.3f}'.format(k, v) for k, v in results.items()))
     return results
 
@@ -391,7 +392,7 @@ def train_val_test():
         return
 
     print('Start training.')
-    for epoch in range(last_epoch+1, FLAGS.num_epochs):
+    for epoch in range(last_epoch + 1, FLAGS.num_epochs):
         lr_scheduler.step()
         # train
         results = run_one_epoch(

@@ -89,7 +89,7 @@ class AttrDict(dict):
                 ret_str.append('{}:'.format(key))
                 child_ret_str = value.__repr__().split('\n')
                 for item in child_ret_str:
-                    ret_str.append('    '+item)
+                    ret_str.append('    ' + item)
             elif isinstance(value, list):
                 if isinstance(value[0], AttrDict):
                     ret_str.append('{}:'.format(key))
@@ -97,7 +97,7 @@ class AttrDict(dict):
                         # treat as AttrDict above
                         child_ret_str = item.__repr__().split('\n')
                         for item in child_ret_str:
-                            ret_str.append('    '+item)
+                            ret_str.append('    ' + item)
                 else:
                     ret_str.append('{}: {}'.format(key, value))
             else:
