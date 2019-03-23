@@ -1,6 +1,6 @@
 # Slimmable Networks
 
-An open source framework for slimmable training on tasks of ImageNet classification and COCO detection, which has enabled numerous projects<sup>[1](#snets), [2](#usnets)</sup>.
+An open source framework for slimmable training on tasks of ImageNet classification and COCO detection, which has enabled numerous projects. <sup>[1](#snets), [2](#usnets)</sup>
 
 <strong  id="snets">1. Slimmable Neural Networks</strong> <sub> [ICLR 2019 Paper](https://arxiv.org/abs/1812.08928) | [OpenReview](https://openreview.net/forum?id=H1gMCsAqY7) | [Detection](https://github.com/JiahuiYu/slimmable_networks/tree/detection) | [Model Zoo](/MODEL_ZOO.md) | [BibTex](#citing) </sub>
 
