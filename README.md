@@ -87,28 +87,3 @@ Implementing slimmable networks and slimmable training is straightforward:
 CC 4.0 Attribution-NonCommercial International
 
 The software is for educaitonal and academic research purpose only.
-
-
-## Citing
-```
-@article{yu2018slimmable,
-  title={Slimmable Neural Networks},
-  author={Yu, Jiahui and Yang, Linjie and Xu, Ning and Yang, Jianchao and Huang, Thomas S},
-  journal={arXiv preprint arXiv:1812.08928},
-  year={2018}
-}
-
-@article{yu2019universally,
-  title={Universally Slimmable Networks and Improved Training Techniques},
-  author={Yu, Jiahui and Huang, Thomas},
-  journal={arXiv preprint arXiv:1903.05134},
-  year={2019}
-}
-
-@article{yu2019network,
-  title={Network Slimming by Slimmable Networks: Towards One-Shot Architecture Search for Channel Numbers},
-  author={Yu, Jiahui and Huang, Thomas},
-  journal={arXiv preprint arXiv:},
-  year={2019}
-}
-```
