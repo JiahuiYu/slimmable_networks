@@ -22,7 +22,7 @@ Illustration of slimmable neural networks. The same model can run at different w
 Illustration of universally slimmable networks. The same model can run at **arbitrary** widths.
 
 
-<strong id="autoslim">3. Network Slimming by Slimmable Networks: <br>Towards One-Shot Architecture Search for Channel Numbers</strong> <sub> [Preprint](https://arxiv.org/abs/) | [Model Zoo](#slimmable-model-zoo)</sub>
+<strong id="autoslim">3. Network Slimming by Slimmable Networks: <br>Towards One-Shot Architecture Search for Channel Numbers</strong> <sub> [Preprint](https://arxiv.org/abs/1903.11728) | [Model Zoo](#slimmable-model-zoo)</sub>
 
 <img src="https://user-images.githubusercontent.com/22609465/54886763-93309000-4e59-11e9-963a-c15bf49af3c0.gif" width=25%/><img src="https://user-images.githubusercontent.com/22609465/54886764-9592ea00-4e59-11e9-9541-924bbd9ff727.gif" width=25%/><img src="https://user-images.githubusercontent.com/22609465/54886766-97f54400-4e59-11e9-81bb-3b262df7c898.gif" width=25%/><img src="https://user-images.githubusercontent.com/22609465/54886768-9a579e00-4e59-11e9-9896-25e7eab7e2e0.gif" width=25%/>
 
@@ -65,7 +65,7 @@ AutoSlimming MobileNet v1, MobileNet v2, MNasNet and ResNet-50: the optimized nu
 | US&#x2011;MobileNet&#160;v2 | [3880cad](https://github.com/JiahuiYu/slimmable_networks/files/2979953/us_mobilenet_v2_calibrated.pt.zip) | Width<br>MFLOPs<br>Top-1 Err. | 1.0 <br>300 <br>28.5 | 0.975 <br>299 <br>28.5 | 0.95 <br>284 <br>28.8 | 0.925 <br>274 <br>28.9 | 0.9 <br>269 <br>29.1 | 0.875 <br>268 <br>29.1 | 0.85 <br>254 <br>29.4 | 0.825 <br>235 <br>29.9 | 0.8 <br>222 <br>30.0 | 0.775 <br>213 <br>30.2 | 0.75 <br>209 <br>30.4 | 0.725 <br>185 <br>30.7 | 0.7 <br>173 <br>31.1 | 0.675 <br>165 <br>31.4 | 0.65 <br>161 <br>31.7 | 0.625 <br>161 <br>31.7 | 0.6 <br>151 <br>32.4 | 0.575 <br>150 <br>32.4 | 0.55 <br>106 <br>34.4 | 0.525 <br>100 <br>34.6 | 0.5 <br>97 <br>34.9 | 0.475 <br>96 <br>35.1 | 0.45 <br>88 <br>35.8 | 0.425 <br>88 <br>35.8 | 0.4 <br>80 <br>36.6 | 0.375 <br>80 <br>36.7 | 0.35<br>59<br>37.7 |
 
 
-**[Network Slimming by Slimmable Networks: <br>Towards One-Shot Architecture Search for Channel Numbers](https://arxiv.org/abs/)**
+**[Network Slimming by Slimmable Networks: <br>Towards One-Shot Architecture Search for Channel Numbers](https://arxiv.org/abs/1903.11728)**
 
 | Model | Top-1 Err. | FLOPs | Model ID |
 | :--- | :---: | ---: | :---: |
