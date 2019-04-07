@@ -48,6 +48,11 @@ reset_parameters: True
 # =========================== Override Settings ===========================
 log_dir: logs/
 slimmable_training: True
+bn_cal_batch_num: 5
+calibrate_bn: true
+cumulative_bn_stats: true
+soft_target: True
+
 model: models.autoslim_mobilenet_v2
 width_mult_list: [1, 2, 3]
 channel_num_list:
@@ -55,12 +60,12 @@ channel_num_list:
   - [8, 8, 96, 16, 96, 16, 96, 24, 144, 24, 144, 24, 144, 56, 288, 56, 288, 56, 288, 56, 288, 96, 432, 96, 432, 96, 864, 240, 1440, 240, 960, 240, 1440, 480, 1920, 1000]  # 305M, dynamic 12
   - [32, 16, 144, 24, 176, 24, 192, 48, 240, 48, 144, 48, 264, 88, 288, 88, 336, 88, 432, 88, 576, 144, 576, 144, 648, 144, 864, 240, 1440, 240, 1440, 240, 1440, 480, 1920, 1000]  # 505M, dynamic 12
 data_transforms: imagenet1k_mobile
-# num_gpus_per_job:
-# lr:
-# lr_scheduler:
-# exp_decaying_lr_gamma:
-# num_epochs:
-# batch_size:
+label_smoothing: 0.1
+num_gpus_per_job: 8
+batch_size: 2048
+lr: 0.5
+lr_scheduler: linear_decaying
+num_epochs: 300
 # test pretrained
 test_only: True
 pretrained: logs/autoslim_mobilenet_v2.pt

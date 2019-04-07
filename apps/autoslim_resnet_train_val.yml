@@ -48,6 +48,11 @@ reset_parameters: True
 # =========================== Override Settings ===========================
 log_dir: logs/
 slimmable_training: True
+bn_cal_batch_num: 5
+calibrate_bn: true
+cumulative_bn_stats: true
+soft_target: True
+
 model: models.autoslim_resnet
 depth: 50
 width_mult_list: [1, 2, 3, 4]
@@ -57,12 +62,7 @@ channel_num_list:
   - [40, 120, 16, 16, 120, 24, 24, 120, 16, 24, 120, 440, 48, 72, 440, 32, 48, 440, 40, 56, 440, 64, 72, 440, 1024, 168, 168, 1024, 96, 144, 1024, 120, 168, 1024, 120, 144, 1024, 120, 144, 1024, 256, 256, 1024, 2016, 512, 512, 2016, 480, 480, 2016, 512, 512, 2016, 1000]  # 2006M
   - [48, 192, 16, 16, 192, 56, 56, 192, 24, 40, 192, 512, 88, 112, 512, 64, 104, 512, 104, 112, 512, 80, 128, 512, 1024, 240, 216, 1024, 144, 216, 1024, 192, 192, 1024, 144, 240, 1024, 240, 256, 1024, 256, 256, 1024, 2016, 512, 512, 2016, 480, 512, 2016, 512, 512, 2016, 1000]  # 3005M
 data_transforms: imagenet1k_mobile
-# num_gpus_per_job:
-# lr:
-# lr_scheduler:
-# exp_decaying_lr_gamma:
-# num_epochs:
-# batch_size:
+label_smoothing: 0.1
 # test pretrained
 test_only: True
 pretrained: logs/autoslim_resnet50.pt

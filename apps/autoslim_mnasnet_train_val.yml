@@ -48,6 +48,11 @@ reset_parameters: True
 # =========================== Override Settings ===========================
 log_dir: logs/
 slimmable_training: True
+bn_cal_batch_num: 5
+calibrate_bn: true
+cumulative_bn_stats: true
+soft_target: True
+
 model: models.autoslim_mnasnet
 width_mult_list: [1, 2, 3]
 channel_num_list:
@@ -55,12 +60,12 @@ channel_num_list:
   - [16, 8, 40, 24, 48, 24, 40, 24, 48, 40, 80, 40, 48, 40, 352, 64, 400, 64, 400, 64, 464, 80, 432, 80, 792, 288, 864, 288, 864, 288, 1008, 288, 1728, 360, 1920, 1000]  # 315M, divisor12
   - [16, 8, 64, 32, 56, 32, 72, 32, 104, 64, 128, 64, 96, 64, 384, 104, 528, 104, 464, 104, 720, 128, 576, 128, 864, 288, 1584, 288, 1728, 288, 1728, 288, 1728, 480, 1920, 1000]  # 539M, divisor12
 data_transforms: imagenet1k_mobile
-# num_gpus_per_job:
-# lr:
-# lr_scheduler:
-# exp_decaying_lr_gamma:
-# num_epochs:
-# batch_size:
+label_smoothing: 0.1
+num_gpus_per_job: 8
+batch_size: 2048
+lr: 0.5
+lr_scheduler: linear_decaying
+num_epochs: 300
 # test pretrained
 test_only: True
 pretrained: logs/autoslim_mnasnet.pt
