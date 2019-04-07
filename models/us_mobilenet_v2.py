@@ -2,7 +2,7 @@ import math
 import torch.nn as nn
 
 
-from .slimmable_ops import USBatchNorm2d, USConv2d, USLinear, make_divisible
+from .slimmable_ops import USBatchNorm2d, USConv2d, make_divisible
 from utils.config import FLAGS
 
 
@@ -26,17 +26,18 @@ class InvertedResidual(nn.Module):
             ]
         # depthwise + project back
         layers += [
-                USConv2d(
-                    expand_inp, expand_inp, 3, stride, 1, groups=expand_inp,
-                    depthwise=True, bias=False,
-                    ratio=[expand_ratio, expand_ratio]),
-                USBatchNorm2d(expand_inp, ratio=expand_ratio),
-                nn.ReLU6(inplace=True),
+            USConv2d(
+                expand_inp, expand_inp, 3, stride, 1, groups=expand_inp,
+                depthwise=True, bias=False,
+                ratio=[expand_ratio, expand_ratio]),
+            USBatchNorm2d(expand_inp, ratio=expand_ratio),
 
-                USConv2d(
-                    expand_inp, outp, 1, 1, 0, bias=False,
-                    ratio=[expand_ratio, 1]),
-                USBatchNorm2d(outp),
+            nn.ReLU6(inplace=True),
+
+            USConv2d(
+                expand_inp, outp, 1, 1, 0, bias=False,
+                ratio=[expand_ratio, 1]),
+            USBatchNorm2d(outp),
         ]
         self.body = nn.Sequential(*layers)
 
