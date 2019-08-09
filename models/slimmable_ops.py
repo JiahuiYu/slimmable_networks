@@ -125,7 +125,7 @@ class USConv2d(nn.Conv2d):
             input, weight, bias, self.stride, self.padding,
             self.dilation, self.groups)
         if getattr(FLAGS, 'conv_averaged', False):
-            y = y * (max(self.in_channels_list)/self.in_channels)
+            y = y * (max(self.in_channels_list) / self.in_channels)
         return y
 
 
@@ -159,14 +159,11 @@ class USBatchNorm2d(nn.BatchNorm2d):
             num_features, affine=True, track_running_stats=False)
         self.num_features_max = num_features
         # for tracking performance during training
-        self.bn = nn.ModuleList(
-            [nn.BatchNorm2d(i, affine=False)
-             for i in [
-                     make_divisible(
-                         self.num_features_max * width_mult / ratio) * ratio
-                     for width_mult in FLAGS.width_mult_list]
-             ]
-        )
+        self.bn = nn.ModuleList([
+            nn.BatchNorm2d(i, affine=False) for i in [
+                make_divisible(
+                    self.num_features_max * width_mult / ratio) * ratio
+                for width_mult in FLAGS.width_mult_list]])
         self.ratio = ratio
         self.width_mult = None
         self.ignore_model_profiling = True
@@ -198,3 +195,19 @@ class USBatchNorm2d(nn.BatchNorm2d):
                 self.momentum,
                 self.eps)
         return y
+
+
+def pop_channels(autoslim_channels):
+    return [i.pop(0) for i in autoslim_channels]
+
+
+def bn_calibration_init(m):
+    """ calculating post-statistics of batch normalization """
+    if getattr(m, 'track_running_stats', False):
+        # reset all values for post-statistics
+        m.reset_running_stats()
+        # set bn in training mode to update post-statistics
+        m.training = True
+        # if use cumulative moving average
+        if getattr(FLAGS, 'cumulative_bn_stats', False):
+            m.momentum = None

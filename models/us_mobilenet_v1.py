@@ -27,6 +27,7 @@ class DepthwiseSeparableConv(nn.Module):
     def forward(self, x):
         return self.body(x)
 
+
 class Model(nn.Module):
     def __init__(self, num_classes=1000, input_size=224):
         super(Model, self).__init__()
@@ -70,7 +71,7 @@ class Model(nn.Module):
                         DepthwiseSeparableConv(channels, outp, 1))
                 channels = outp
 
-        avg_pool_size = input_size// 32
+        avg_pool_size = input_size // 32
         self.features.append(nn.AvgPool2d(avg_pool_size))
 
         # make it nn.Sequential
