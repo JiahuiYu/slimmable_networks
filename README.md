@@ -15,7 +15,7 @@ Illustration of slimmable neural networks. The same model can run at different w
 </div>
 
 
-<strong id="usnets">2. Universally Slimmable Networks and Improved Training Techniques</strong> <sub> [Preprint](https://arxiv.org/abs/1903.05134) | [Model Zoo](#slimmable-model-zoo)</sub>
+<strong id="usnets">2. Universally Slimmable Networks and Improved Training Techniques</strong> <sub> [ICCV 2019 Paper](https://arxiv.org/abs/1903.05134) | [Model Zoo](#slimmable-model-zoo)</sub>
 
 <img src="https://user-images.githubusercontent.com/22609465/54562571-45b5ae00-4995-11e9-8984-49e32d07e325.png" width=60%/>
 
