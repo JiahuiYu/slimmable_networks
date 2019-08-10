@@ -539,7 +539,13 @@ def train_val_test():
 
     # for universally slimmable networks only
     if getattr(FLAGS, 'universally_slimmable_training', False):
-        FLAGS.width_mult_list = FLAGS.width_mult_range
+        if getattr(FLAGS, 'test_only', False):
+            if getattr(FLAGS, 'width_mult_list_test', None) is not None:
+                FLAGS.test_only = False
+                # skip training and goto BN calibration
+                FLAGS.skip_training = True
+        else:
+            FLAGS.width_mult_list = FLAGS.width_mult_range
 
     # model
     model, model_wrapper = get_model()
@@ -630,6 +636,9 @@ def train_val_test():
         set_random_seed(getattr(FLAGS, 'random_seed', 0) + get_rank())
     print('Start training.')
     for epoch in range(last_epoch+1, FLAGS.num_epochs):
+        if getattr(FLAGS, 'skip_training', False):
+            print('Skip training at epoch: {}'.format(epoch))
+            break
         lr_scheduler.step()
         # train
         results = run_one_epoch(
@@ -666,7 +675,7 @@ def train_val_test():
     if getattr(FLAGS, 'calibrate_bn', False):
         if getattr(FLAGS, 'universally_slimmable_training', False):
             # need to rebuild model according to width_mult_list_test
-            width_mult_list = FLAGS.width_mult_range.copy()
+            width_mult_list = FLAGS.width_mult_list.copy()
             for width in FLAGS.width_mult_list_test:
                 if width not in FLAGS.width_mult_list:
                     width_mult_list.append(width)
