@@ -51,7 +51,7 @@ slimmable_training: True
 bn_cal_batch_num: 5
 calibrate_bn: true
 cumulative_bn_stats: true
-num_sample_training: 2
+num_sample_training: 4
 universally_slimmable_training: True
 soft_target: True
 
