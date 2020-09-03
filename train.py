@@ -103,6 +103,28 @@ def dataset(train_transforms, val_transforms, test_transforms):
             os.path.join(FLAGS.dataset_dir, 'val'),
             transform=val_transforms)
         test_set = None
+    elif FLAGS.dataset == 'imagenet1k_val50k':
+        if not FLAGS.test_only:
+            train_set = datasets.ImageFolder(
+                os.path.join(FLAGS.dataset_dir, 'train'),
+                transform=train_transforms)
+            if hasattr(FLAGS, 'random_seed'):
+                seed = FLAGS.random_seed
+            else:
+                seed = 0
+            random.seed(seed)
+            val_size = 50000
+            random.shuffle(train_set.samples)
+            if getattr(FLAGS, 'autoslim', False):
+                train_set.samples = train_set.samples[:val_size]
+            else:
+                train_set.samples = train_set.samples[val_size:]
+        else:
+            train_set = None
+        val_set = datasets.ImageFolder(
+            os.path.join(FLAGS.dataset_dir, 'val'),
+            transform=val_transforms)
+        test_set = None
     else:
         try:
             dataset_lib = importlib.import_module(FLAGS.dataset)
@@ -531,6 +553,61 @@ def get_conv_layers(m):
     return layers
 
 
+def slimming(loader, model, criterion):
+    """network slimming by slimmable network"""
+    model.eval()
+    bn_calibration_init(model)
+    model.apply(lambda m: setattr(m, 'width_mult', 1.0))
+    if getattr(FLAGS, 'distributed', False):
+        layers = get_conv_layers(model.module)
+    else:
+        raise NotImplementedError
+    print('Totally {} layers to slim.'.format(len(layers)))
+    error = np.zeros(len(layers))
+    # get data
+    if getattr(FLAGS, 'distributed', False):
+        loader.sampler.set_epoch(0)
+    input, target = next(iter(loader))
+    input = input.cuda()
+    target = target.cuda()
+    # start to slim
+    print('Start to slim...')
+    flops = 10e10
+    FLAGS.autoslim_target_flops = sorted(FLAGS.autoslim_target_flops)
+    autoslim_target_flop = FLAGS.autoslim_target_flops.pop()
+    while True:
+        flops, params = model_profiling(
+            model, FLAGS.image_size, FLAGS.image_size,
+            verbose=getattr(FLAGS, 'profiling_verbose', False))
+        if flops < autoslim_target_flop:
+            if len(FLAGS.autoslim_target_flops) == 0:
+                break
+            else:
+                print('Find autoslim net at flops {}'.format(
+                    autoslim_target_flop))
+                autoslim_target_flop = FLAGS.autoslim_target_flops.pop()
+        for i in range(len(layers)):
+            torch.cuda.empty_cache()
+            error[i] = 0.
+            outc = layers[i].out_channels - layers[i].divisor
+            if outc <= 0 or outc > layers[i].out_channels_max:
+                error[i] += 1.
+                continue
+            layers[i].out_channels -= layers[i].divisor
+            loss, error_batch = forward_loss(
+                model, criterion, input, target, None, return_acc=True)
+            error[i] += error_batch
+            layers[i].out_channels += layers[i].divisor
+        best_index = np.argmin(error)
+        print(*[f'{element:.4f}' for element in error])
+        layers[best_index].out_channels -= layers[best_index].divisor
+        print(
+            'Adjust layer {} for {} to {}, error: {}.'.format(
+                best_index, -layers[best_index].divisor,
+                layers[best_index].out_channels, error[best_index]))
+    return
+
+
 def train_val_test():
     """train and val"""
     torch.backends.cudnn.benchmark = True
@@ -615,6 +692,12 @@ def train_val_test():
     train_loader, val_loader, test_loader = data_loader(
         train_set, val_set, test_set)
 
+    # autoslim only
+    if getattr(FLAGS, 'autoslim', False):
+        with torch.no_grad():
+            slimming(train_loader, model_wrapper, criterion)
+        return
+
     if getattr(FLAGS, 'test_only', False) and (test_loader is not None):
         print('Start testing.')
         test_meters = get_meters('test')
@@ -675,7 +758,7 @@ def train_val_test():
     if getattr(FLAGS, 'calibrate_bn', False):
         if getattr(FLAGS, 'universally_slimmable_training', False):
             # need to rebuild model according to width_mult_list_test
-            width_mult_list = FLAGS.width_mult_list.copy()
+            width_mult_list = FLAGS.width_mult_range.copy()
             for width in FLAGS.width_mult_list_test:
                 if width not in FLAGS.width_mult_list:
                     width_mult_list.append(width)

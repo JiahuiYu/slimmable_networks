@@ -1,0 +1,71 @@
+# =========================== Basic Settings ===========================
+# machine info
+num_gpus_per_job: 4  # number of gpus each job need
+num_cpus_per_job: 63  # number of cpus each job need
+memory_per_job: 380  # memory requirement each job need
+gpu_type: "nvidia-tesla-p100"
+
+# data
+dataset: imagenet1k
+data_transforms: imagenet1k_basic
+data_loader: imagenet1k_basic
+dataset_dir: data/imagenet
+data_loader_workers: 62
+
+# info
+num_classes: 1000
+image_size: 224
+topk: [1, 5]
+num_epochs: 100
+
+# optimizer
+optimizer: sgd
+momentum: 0.9
+weight_decay: 0.0001
+nesterov: True
+
+# lr
+lr: 0.1
+lr_scheduler: multistep
+multistep_lr_milestones: [30, 60, 90]
+multistep_lr_gamma: 0.1
+
+# model profiling
+profiling: [gpu]
+
+# pretrain, resume, test_only
+pretrained: ''
+resume: ''
+test_only: False
+
+#
+random_seed: 1995
+batch_size: 256
+model: ''
+reset_parameters: True
+
+
+# =========================== Override Settings ===========================
+log_dir: logs/
+slimmable_training: True
+bn_cal_batch_num: 5
+calibrate_bn: true
+cumulative_bn_stats: true
+soft_target: True
+
+model: models.autoslim_mobilenet_v1
+width_mult_list: [1, 2, 3]
+channel_num_list:
+  - [16, 32, 48, 48, 88, 88, 224, 176, 224, 368, 320, 224, 744, 744, 1000]  # 150M, dynamic 12
+  - [16, 32, 48, 64, 112, 184, 320, 368, 320, 416, 464, 560, 1128, 1128, 1000]  # 325M, dynamic 12
+  - [24, 64, 128, 144, 232, 232, 560, 464, 512, 464, 560, 560, 1128, 1128, 1000]  # 572M, dynamic 12
+data_transforms: imagenet1k_mobile
+label_smoothing: 0.1
+num_gpus_per_job: 8
+batch_size: 2048
+lr: 0.5
+lr_scheduler: linear_decaying
+num_epochs: 300
+# test pretrained
+test_only: True
+pretrained: logs/autoslim_mobilenet_v1.pt

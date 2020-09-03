@@ -1,0 +1,68 @@
+# =========================== Basic Settings ===========================
+# machine info
+num_gpus_per_job: 4  # number of gpus each job need
+num_cpus_per_job: 63  # number of cpus each job need
+memory_per_job: 380  # memory requirement each job need
+gpu_type: "nvidia-tesla-p100"
+
+# data
+dataset: imagenet1k
+data_transforms: imagenet1k_basic
+data_loader: imagenet1k_basic
+dataset_dir: data/imagenet
+data_loader_workers: 62
+
+# info
+num_classes: 1000
+image_size: 224
+topk: [1, 5]
+num_epochs: 100
+
+# optimizer
+optimizer: sgd
+momentum: 0.9
+weight_decay: 0.0001
+nesterov: True
+
+# lr
+lr: 0.1
+lr_scheduler: multistep
+multistep_lr_milestones: [30, 60, 90]
+multistep_lr_gamma: 0.1
+
+# model profiling
+profiling: [gpu]
+
+# pretrain, resume, test_only
+pretrained: ''
+resume: ''
+test_only: False
+
+#
+random_seed: 1995
+batch_size: 256
+model: ''
+reset_parameters: True
+
+
+# =========================== Override Settings ===========================
+log_dir: logs/
+slimmable_training: True
+bn_cal_batch_num: 5
+calibrate_bn: true
+cumulative_bn_stats: true
+soft_target: True
+
+model: models.autoslim_resnet
+depth: 50
+width_mult_list: [1, 2, 3, 4]
+channel_num_list:
+  - [24, 72, 8, 16, 72, 16, 16, 72, 8, 8, 72, 240, 16, 24, 240, 16, 24, 240, 16, 16, 240, 16, 24, 240, 704, 72, 72, 704, 48, 72, 704, 48, 72, 704, 72, 72, 704, 48, 48, 704, 48, 48, 704, 1680, 280, 240, 1680, 120, 200, 1680, 280, 280, 1680, 1000] # 570M
+  - [32, 72, 16, 16, 72, 16, 16, 72, 8, 8, 72, 280, 24, 40, 280, 16, 24, 280, 16, 24, 280, 24, 40, 280, 880, 72, 72, 880, 72, 96, 880, 72, 72, 880, 72, 72, 880, 48, 72, 880, 168, 96, 880, 2016, 360, 280, 2016, 320, 360, 2016, 480, 440, 2016, 1000]  # 1000M
+  - [40, 120, 16, 16, 120, 24, 24, 120, 16, 24, 120, 440, 48, 72, 440, 32, 48, 440, 40, 56, 440, 64, 72, 440, 1024, 168, 168, 1024, 96, 144, 1024, 120, 168, 1024, 120, 144, 1024, 120, 144, 1024, 256, 256, 1024, 2016, 512, 512, 2016, 480, 480, 2016, 512, 512, 2016, 1000]  # 2006M
+  - [48, 192, 16, 16, 192, 56, 56, 192, 24, 40, 192, 512, 88, 112, 512, 64, 104, 512, 104, 112, 512, 80, 128, 512, 1024, 240, 216, 1024, 144, 216, 1024, 192, 192, 1024, 144, 240, 1024, 240, 256, 1024, 256, 256, 1024, 2016, 512, 512, 2016, 480, 512, 2016, 512, 512, 2016, 1000]  # 3005M
+data_transforms: imagenet1k_mobile
+label_smoothing: 0.1
+# test pretrained
+test_only: True
+pretrained: logs/autoslim_resnet50.pt
