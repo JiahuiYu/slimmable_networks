@@ -22,7 +22,7 @@ Illustration of slimmable neural networks. The same model can run at different w
 Illustration of universally slimmable networks. The same model can run at **arbitrary** widths.
 
 
-<strong id="autoslim">3. AutoSlim: Towards One-Shot Architecture Search for Channel Numbers</strong> <sub> [Preprint](https://arxiv.org/abs/1903.11728) | [Model Zoo](#slimmable-model-zoo)</sub>
+<strong id="autoslim">3. AutoSlim: Towards One-Shot Architecture Search for Channel Numbers</strong> <sub> [NeurIPS 2019 Workshop Paper](https://arxiv.org/abs/1903.11728) | [Model Zoo](#slimmable-model-zoo)</sub>
 
 <img src="https://user-images.githubusercontent.com/22609465/54886763-93309000-4e59-11e9-963a-c15bf49af3c0.gif" width=25%/><img src="https://user-images.githubusercontent.com/22609465/54886764-9592ea00-4e59-11e9-9541-924bbd9ff727.gif" width=25%/><img src="https://user-images.githubusercontent.com/22609465/54886766-97f54400-4e59-11e9-81bb-3b262df7c898.gif" width=25%/><img src="https://user-images.githubusercontent.com/22609465/54886768-9a579e00-4e59-11e9-9896-25e7eab7e2e0.gif" width=25%/>
 
@@ -69,10 +69,10 @@ AutoSlimming MobileNet v1, MobileNet v2, MNasNet and ResNet-50: the optimized nu
 
 | Model | Top-1 Err. | FLOPs | Model ID |
 | :--- | :---: | ---: | :---: |
-| AutoSlim-MobileNet v1 | 27.0<br>28.5<br>32.1 | 572M<br>325M<br>150M | [coming soon]() |
-| AutoSlim-MobileNet v2 | 24.6<br>25.8<br>27.0 | 505M<br>305M<br>207M | [coming soon]() |
-| AutoSlim-MNasNet | 24.6<br>25.4<br>26.8 | 532M<br>315M<br>217M | [coming soon]() |
-| AutoSlim-ResNet-50 | 24.0<br>24.4<br>26.0<br>27.8 | 3.0G<br>2.0G<br>1.0G<br>570M | [coming soon]() |
+| AutoSlim-MobileNet v1 | 27.0<br>28.5<br>32.1 | 572M<br>325M<br>150M | [9b0b1ab](https://github.com/JiahuiYu/slimmable_networks/files/5166182/autoslim_mobilenet_v1.pt.zip) |
+| AutoSlim-MobileNet v2 | 24.6<br>25.8<br>27.0 | 505M<br>305M<br>207M | [a24f1f2](https://github.com/JiahuiYu/slimmable_networks/files/5166194/autoslim_mobilenet_v2.pt.zip) |
+| AutoSlim-MNasNet | 24.6<br>25.4<br>26.8 | 532M<br>315M<br>217M | [31477c9](https://drive.google.com/file/d/1tEuMYc_F-4MUYPua8KAIKjEd7eJDVSx2) |
+| AutoSlim-ResNet-50 | 24.0<br>24.4<br>26.0<br>27.8 | 3.0G<br>2.0G<br>1.0G<br>570M | [f95f419](https://drive.google.com/file/d/1WOOu6frdfGo1_nyHdaMpRILPATtzVAMT) |
 
 
 ## Technical Details
