@@ -103,11 +103,23 @@ def module_profiling(self, input, output, verbose):
         self.n_params = 0
         self.n_seconds = 0
         num_children = 0
-        for m in self.children():
+
+        def get_children(m):
+            children_list = []
+            for child in m.children():
+                if isinstance(child, nn.ModuleList):
+                    children_list.extend(get_children(child))
+                else:
+                    children_list.append(child)
+            return children_list
+        
+        all_children = get_children(self)
+        num_children += len(all_children)
+        for m in all_children:
             self.n_macs += getattr(m, 'n_macs', 0)
             self.n_params += getattr(m, 'n_params', 0)
             self.n_seconds += getattr(m, 'n_seconds', 0)
-            num_children += 1
+        
         ignore_zeros_t = [
             nn.BatchNorm2d, nn.Dropout2d, nn.Dropout, nn.Sequential,
             nn.ReLU6, nn.ReLU, nn.MaxPool2d,
